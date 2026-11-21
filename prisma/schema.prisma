@@ -1,0 +1,81 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Lab {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  website     String?
+  logo        String?
+  models      Model[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Provider {
+  id          String          @id @default(cuid())
+  name        String          @unique
+  description String?
+  website     String?
+  models      ModelProvider[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model Model {
+  id               String          @id @default(cuid())
+  name             String
+  slug             String          @unique
+  description      String?
+  modelType        String?
+  contextWindow    Int             @default(0)
+  inputPrice       Float           @default(0)
+  outputPrice      Float           @default(0)
+  releaseDate      DateTime?
+  inputModalities  String[]
+  outputModalities String[]
+  capabilities     String[]
+  labId            String
+  lab              Lab             @relation(fields: [labId], references: [id])
+  providers        ModelProvider[]
+  benchmarks       Benchmark[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([labId])
+}
+
+model ModelProvider {
+  id          String   @id @default(cuid())
+  modelId     String
+  providerId  String
+  inputPrice  Float    @default(0)
+  outputPrice Float    @default(0)
+  model       Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  provider    Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([modelId, providerId])
+  @@index([providerId])
+}
+
+model Benchmark {
+  id        String   @id @default(cuid())
+  name      String
+  score     Float
+  category  String?
+  modelId   String
+  model     Model    @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([modelId])
+  @@index([name])
+}
